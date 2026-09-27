@@ -4,7 +4,7 @@ Hệ thống giám sát tình trạng máy tính/server theo thời gian thực 
 
 ---
 
-## 1. Định hướng làm đề tài của nhóm
+## Định hướng làm đề tài của nhóm
 
 Nhóm xây dựng một **dashboard giám sát mạng/hệ thống theo thời gian thực**, gồm 3 thành phần chính:
 
@@ -18,7 +18,7 @@ Ngoài mục tiêu học thuật (minh họa cách giao thức WebSocket hoạt 
 
 ---
 
-## 2. Các Project tham khảo
+## Project tham khảo
 
 | Project | Mô tả | Link |
 |---|---|---|
@@ -31,7 +31,7 @@ Ngoài mục tiêu học thuật (minh họa cách giao thức WebSocket hoạt 
 
 ---
 
-## 3. Nhóm sẽ làm thêm / phát triển thêm những gì so với các project tham khảo
+## Nhóm sẽ phát triển thêm những gì
 
 - **Glances** và **Netdata** đã rất mạnh nhưng khá "nặng" và phức tạp để cài đặt/tùy biến cho người mới; nhóm hướng tới một bản **tối giản, dễ triển khai trong vài phút**, phù hợp cho doanh nghiệp nhỏ không có đội IT chuyên trách.
 - Các project tham khảo (Glances, Netdata) tập trung thuần vào **giám sát**; nhóm dự định **kết hợp thêm kênh chat/thông báo nội bộ** trên cùng một kết nối WebSocket (cùng hạ tầng, khác loại message) — biến dashboard thành một "phòng vận hành" (ops room) vừa xem số liệu vừa trao đổi khi có sự cố, thay vì phải mở thêm công cụ chat riêng.
@@ -41,7 +41,7 @@ Ngoài mục tiêu học thuật (minh họa cách giao thức WebSocket hoạt 
 
 ---
 
-## Cấu trúc thư mục (dự kiến)
+## Cấu trúc thư mục
 
 ```
 /agent      # Script Python thu thập chỉ số hệ thống, gửi qua WebSocket
