@@ -54,7 +54,7 @@ README.md
 
 | Thành viên | Vai trò |
 |---|---|
-| _Lư Hoàng Minh Hiếu_ | Backend / WebSocket Server |
+| _Lư Hoàng Minh Hiếu_ | Backend / WebSocket Server | Dashboard / Frontend |
 | _Đặng Phúc Hải Tịnh_ | Agent / Data Collector |
-| _Nguyễn Hồng Đức_ | Dashboard / Frontend |# LTM-Group15
+
 Group project for Network Developing by Group 15
