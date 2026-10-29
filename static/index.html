@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetPulse | Network Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">N</span><span>Net<span class="brand-light">Pulse</span><small>NETWORK MONITOR</small></span></div>
+    <div class="side-label">WORKSPACE</div>
+    <a class="nav active" href="#"><span>▦</span> Overview</a>
+    <a class="nav" href="#traffic"><span>⌁</span> Traffic analytics</a>
+    <a class="nav" href="#devices"><span>▣</span> Devices</a>
+    <a class="nav" href="#events"><span>◷</span> Event log <i class="nav-dot"></i></a>
+    <div class="sidebar-bottom"><div class="connection-card"><span class="pulse-dot"></span><div><b>Live connection</b><small id="sideConnection">Connecting…</small></div></div><div class="user"><div class="avatar">N</div><div><b>Network Admin</b><small>Demo workspace</small></div><span class="more">···</span></div></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="crumb">Monitoring <span>/</span> <b>Overview</b></div><div class="top-actions"><span class="live-pill"><i></i><span id="liveText">CONNECTING</span></span><button id="pauseBtn" class="button secondary">Ⅱ Pause stream</button><div class="date-chip" id="clock">--:--:--</div></div></header>
+    <section class="page-heading"><div><div class="eyebrow">NETWORK OPERATIONS CENTER</div><h1>Network overview <span class="spark">✦</span></h1><p>Real-time visibility into your network health and traffic.</p></div><div class="heading-right"><span class="demo-tag">● SIMULATION MODE</span><button class="button primary" id="pingBtn">↗ Send WebSocket ping</button></div></section>
+    <section class="stats-grid">
+      <article class="stat-card"><div class="stat-top"><span>Inbound traffic</span><span class="stat-icon blue">↓</span></div><div class="stat-value"><span id="rxValue">—</span><small>Mbps</small></div><div class="stat-foot"><span class="trend up">↗ Live</span><span>Incoming bandwidth</span></div><div class="mini-chart"><canvas id="rxSpark"></canvas></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Outbound traffic</span><span class="stat-icon purple">↑</span></div><div class="stat-value"><span id="txValue">—</span><small>Mbps</small></div><div class="stat-foot"><span class="trend up">↗ Live</span><span>Outgoing bandwidth</span></div><div class="mini-chart"><canvas id="txSpark"></canvas></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Average latency</span><span class="stat-icon amber">◷</span></div><div class="stat-value"><span id="latencyValue">—</span><small>ms</small></div><div class="stat-foot"><span class="trend neutral" id="latencyStatus">Measuring</span><span>Round-trip estimate</span></div><div class="latency-track"><span id="latencyBar"></span></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Packet loss</span><span class="stat-icon green">⌁</span></div><div class="stat-value"><span id="lossValue">—</span><small>%</small></div><div class="stat-foot"><span class="trend good" id="lossStatus">Within threshold</span><span>Target: &lt; 1%</span></div><div class="loss-track"><span id="lossBar"></span></div></article>
+    </section>
+    <section class="content-grid" id="traffic">
+      <article class="panel traffic-panel"><div class="panel-head"><div><h2>Traffic throughput</h2><p>Inbound and outbound bandwidth over time</p></div><div class="legend"><span><i class="legend-blue"></i> Inbound</span><span><i class="legend-purple"></i> Outbound</span></div></div><div class="chart-summary"><strong id="chartRx">— <small>Mbps</small></strong><span>Current inbound</span><strong id="chartTx">— <small>Mbps</small></strong><span>Current outbound</span></div><div class="large-chart"><canvas id="trafficChart"></canvas></div><div class="chart-axis"><span>Last 30 seconds</span><span>Updates every second <i class="tiny-live"></i></span></div></article>
+      <article class="panel health-panel"><div class="panel-head"><div><h2>System health</h2><p>Host resource utilization</p></div><span class="dots">···</span></div>
+        <div class="gauge-row"><div class="gauge" id="cpuGauge"><div class="gauge-inner"><b id="cpuValue">—%</b><small>CPU usage</small></div></div><div class="gauge-copy"><b id="cpuState">Collecting</b><span>Processor utilization</span><div class="thin-track"><i id="cpuBar"></i></div></div></div>
+        <div class="gauge-row"><div class="gauge memory" id="memoryGauge"><div class="gauge-inner"><b id="memoryValue">—%</b><small>Memory usage</small></div></div><div class="gauge-copy"><b id="memoryState">Collecting</b><span>System memory</span><div class="thin-track"><i id="memoryBar"></i></div></div></div>
+        <div class="health-footer"><span class="pulse-dot"></span> All monitored metrics are streaming</div>
+      </article>
+    </section>
+    <section class="bottom-grid" id="devices">
+      <article class="panel devices-panel"><div class="panel-head"><div><h2>Monitored endpoints</h2><p>Demo inventory · 3 endpoints</p></div><button class="text-button" id="refreshBtn">↻ Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>ENDPOINT</th><th>IP ADDRESS</th><th>STATUS</th><th>LATENCY</th><th>LAST SEEN</th></tr></thead><tbody id="deviceRows"><tr><td><span class="device-icon">▣</span><b>Gateway router</b></td><td>192.168.1.1</td><td><span class="status online">● Online</span></td><td id="devLat1">—</td><td>Just now</td></tr><tr><td><span class="device-icon">▤</span><b>Application server</b></td><td>192.168.1.10</td><td><span class="status online">● Online</span></td><td id="devLat2">—</td><td>Just now</td></tr><tr><td><span class="device-icon">▧</span><b>Database node</b></td><td>192.168.1.20</td><td><span class="status online">● Online</span></td><td id="devLat3">—</td><td>Just now</td></tr></tbody></table></div>
+      </article>
+      <article class="panel events-panel" id="events"><div class="panel-head"><div><h2>Recent events</h2><p>Live WebSocket event stream</p></div><span class="event-count" id="eventCount">0 events</span></div><div class="event-list" id="eventList"><div class="empty-event">Waiting for live events…</div></div></article>
+    </section>
+    <footer><span>NetPulse <b>v1.0.0</b> · Educational demo</span><span>Transport: <b id="transportLabel">WebSocket</b> · <span id="footerStatus">Connecting</span></span></footer>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body></html>
