@@ -75,3 +75,12 @@ build.bat          builds dist\NetPulse.exe locally
 - GPU details (temperature, power, clocks) are only available for NVIDIA GPUs.
 - Monitors the local machine only; there is no remote agent or multi-device view yet.
 - Educational project, not a hardened enterprise tool.
+
+## Team members & roles (Group 15)
+| Member | Role |
+|---|---|
+| Lư Hoàng Minh Hiếu | Backend / Agent / Data Collector  |
+| Đặng Phúc Hải Tịnh | Dashboard / WebSocket / Frontend  |
+
+
+Network Developing class project. Feedback: netpulsegroup15@gmail.com
