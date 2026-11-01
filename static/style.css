@@ -7,3 +7,52 @@
 /* Fix chart canvases: prevent default 300x150 sizing from overflowing cards */
 .mini-chart canvas { display:block; width:100%; height:100%; }
 .large-chart canvas { display:block; width:100%; height:100%; }
+
+.status.offline{background:#3a1f22;color:#ff958a}.gauge.disk{background:conic-gradient(var(--green) 0deg 100deg,#26334b 100deg 360deg)}.gauge-row:nth-of-type(4) .thin-track i{background:var(--green)}.event-list{max-height:200px}
+
+.hw-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:13px}.bottom-grid.single{grid-template-columns:1fr}
+.gpu-list,.vol-list{margin-top:16px;display:flex;flex-direction:column;gap:14px;max-height:340px;overflow:auto}
+.gpu-card,.vol-item{border:1px solid #202c42;border-radius:9px;padding:13px;background:#0f1829}
+.hw-title{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.hw-title b{font-size:11px;color:#e0e8f7}.hw-title span{font-size:9px;color:#8795ad;white-space:nowrap}
+.hw-sub{font-size:9px;color:#7f8da7;margin-top:4px}
+.bar{height:5px;background:#28344b;border-radius:5px;margin-top:10px;overflow:hidden}.bar i{display:block;height:100%;width:0;border-radius:5px;background:var(--blue);transition:width .4s}
+.bar.mem i{background:var(--purple)}.bar.disk i{background:var(--green)}.bar i.warn{background:var(--amber)}.bar i.crit{background:#ff7a6e}
+.gpu-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.gpu-metrics div{font-size:9px;color:#7f8da7}.gpu-metrics b{display:block;font:700 14px Manrope;color:#eef3ff;margin-top:3px;font-variant-numeric:tabular-nums}
+.io-chip{display:flex;gap:8px;font-size:9px;color:#8998b1}.io-chip span{border:1px solid #2a3650;padding:5px 7px;border-radius:5px}.io-chip b{color:#dbe8ff;font-variant-numeric:tabular-nums}
+.type-tag{display:inline-block;min-width:68px;padding:3px 7px;border-radius:4px;background:#1c3152;color:#8bb5ff;font-size:9px;font-weight:700;letter-spacing:.5px}
+@media(max-width:1100px){.hw-grid{grid-template-columns:1fr}}
+
+.nav.disabled{pointer-events:none;cursor:default;opacity:.42}
+.comp-name{display:block;font-size:9px;font-weight:700;letter-spacing:.3px;color:#8bb5ff;margin:0 0 5px;line-height:1.35;overflow-wrap:anywhere}
+.gauge-row[hidden]{display:none}
+.gauge.gpu{background:conic-gradient(var(--amber) 0deg 0deg,#26334b 0deg 360deg)}
+.gauge-row:nth-of-type(5) .thin-track i{background:var(--amber)}
+.gauge-copy>span.comp-name{margin-top:0}
+
+/* Traffic breakdown: dịch vụ / ứng dụng ăn nhiều băng thông nhất */
+.breakdown{margin-top:14px;border-top:1px solid #202c42;padding-top:13px}
+.bd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.bd-tabs{display:flex;gap:4px;background:#0f1829;border:1px solid #26334b;border-radius:7px;padding:3px}
+.bd-tab{border:0;background:none;color:#8b9ab4;font-size:10px;font-weight:600;padding:5px 11px;border-radius:5px}
+.bd-tab.active{background:#1f3254;color:#e6efff}
+.bd-sub{font-size:9px;color:#7f8da7}
+.bd-list{display:flex;flex-direction:column}
+.bd-row{display:grid;grid-template-columns:18px minmax(80px,1.1fr) minmax(70px,1.6fr) minmax(86px,auto) 34px 62px;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #1b2639;font-size:10px}
+.bd-row:last-child{border-bottom:0}
+.bd-rank{color:#6f7f9b;font-size:9px;text-align:center}
+.bd-name{color:#e0e8f7;font-size:10px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd-track{height:6px;background:#1b2740;border-radius:4px;overflow:hidden}
+.bd-fill{height:100%;display:flex;border-radius:4px;overflow:hidden;transition:width .4s}
+.bd-fill i{display:block;height:100%}
+.bd-rx{background:var(--blue)}.bd-tx{background:var(--purple)}
+.bd-val{color:#dbe6fb;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.bd-val small{display:block;font-weight:500;font-size:8px;color:#7887a1;margin-top:2px}
+.bd-share{color:#9ba9c0;text-align:right;font-variant-numeric:tabular-nums}
+.bd-total{color:#7887a1;text-align:right;font-size:9px;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:700px){.bd-row{grid-template-columns:16px 1fr minmax(70px,auto) 30px;}.bd-track,.bd-total{display:none}.bd-head{flex-direction:column;align-items:flex-start}}
+
+/* Ghi chú nhóm phía trên Live connection */
+.side-credit{margin:0 2px 14px;padding:0 4px;font-size:9px;line-height:1.55;color:#7d8ba5}
+.side-credit a{color:#86aaff;text-decoration:none;overflow-wrap:anywhere}
+.side-credit a:hover{text-decoration:underline}
+@media(max-width:700px){.side-credit{display:none}}

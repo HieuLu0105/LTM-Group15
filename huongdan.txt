@@ -1,2 +1,17 @@
+=== NGUOI DUNG CUOI ===
+Chi can chay NetPulse.exe -> trinh duyet tu mo dashboard (http://127.0.0.1:8080).
+Dong cua so console de tat. So lieu chi hien tren chinh may do (khong mo ra mang LAN).
+Neu Windows SmartScreen canh bao: "More info" -> "Run anyway" (do exe chua ky so).
+
+=== CHAY TU SOURCE ===
 b1: py -m pip install -r requirements.txt
-b2: py app.py
+b2: py app.py            (them --no-browser neu khong muon tu mo trinh duyet)
+
+=== BUILD FILE EXE ===
+Cach 1 (Windows): bam dup build.bat -> dist\NetPulse.exe
+Cach 2 (GitHub): push repo len GitHub -> tab Actions -> "Build NetPulse.exe" -> Run workflow
+                 -> tai artifact NetPulse-windows. Push tag v* de tu dinh vao Release.
+
+=== BANG THONG THEO DICH VU / UNG DUNG ===
+Can cai Npcap (https://npcap.com) + chay NetPulse voi quyen Administrator thi bang "Services / Applications"
+trong muc Traffic throughput moi co du lieu. Khong co quyen thi muc nay bao ly do, cac phan khac van chay binh thuong.

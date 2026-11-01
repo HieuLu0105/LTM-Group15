@@ -1,8 +1,10 @@
 const $ = (id) => document.getElementById(id);
 const history = {rx:[], tx:[], cpu:[], memory:[]};
+const fmtMB=(m)=>m>=1024?(m/1024).toFixed(2)+' GB':m.toFixed(1)+' MB';
+const fmtRate=(v)=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2);
 const MAX = 30;
 let socket, paused = false, eventCount = 0, toastTimer;
-const colors = {rx:'#4d8dff', tx:'#a78bfa', cpu:'#4d8dff', memory:'#a78bfa'};
+const colors = {rx:'#4d8dff', tx:'#a78bfa', cpu:'#4d8dff', memory:'#a78bfa', disk:'#36d6a0', gpu:'#f4b860'};
 function showToast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
 function setConnection(ok, message){
   $('liveText').textContent=ok?'LIVE':'DISCONNECTED';
@@ -32,9 +34,9 @@ function drawLine(canvasId, values, color, fill=false){
 function drawTraffic(){
  const c=$('trafficChart'),ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,dpr=window.devicePixelRatio||1;
  c.width=Math.max(1,Math.round(w*dpr));c.height=Math.max(1,Math.round(h*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
- const vals=[...history.rx,...history.tx],max=Math.max(100,...vals)*1.2,left=30,right=8,top=9,bottom=19,plotW=w-left-right,plotH=h-top-bottom;
+ const vals=[...history.rx,...history.tx],max=Math.max(1,...vals)*1.2,left=30,right=8,top=9,bottom=19,plotW=w-left-right,plotH=h-top-bottom;
  ctx.font='9px DM Sans';ctx.textAlign='right';ctx.fillStyle='#71809b';ctx.strokeStyle='#26334a';ctx.lineWidth=1;
- for(let i=0;i<=4;i++){let y=top+plotH*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();ctx.fillText(Math.round(max*(1-i/4)),left-7,y+3);}
+ for(let i=0;i<=4;i++){let y=top+plotH*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();const lv=max*(1-i/4);ctx.fillText(lv>=10?Math.round(lv):lv.toFixed(1),left-7,y+3);}
  for(let i=0;i<5;i++){let x=left+plotW*i/4;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+plotH);ctx.stroke();}
  const series=[['rx','#4d8dff'],['tx','#a78bfa']];
  series.forEach(([key,color])=>{const arr=history[key];if(arr.length<2)return;const pts=arr.map((v,i)=>[left+plotW*i/(MAX-1),top+plotH-(v/max)*plotH]);ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.lineWidth=2;ctx.strokeStyle=color;ctx.stroke();ctx.lineTo(pts[pts.length-1][0],top+plotH);ctx.lineTo(pts[0][0],top+plotH);ctx.closePath();ctx.fillStyle=color+'13';ctx.fill();});
@@ -42,25 +44,117 @@ function drawTraffic(){
 function setGauge(id, value, color){
  $(id).style.background=`conic-gradient(${color} 0deg ${Math.min(100,value)*3.6}deg,#26334b ${Math.min(100,value)*3.6}deg 360deg)`;
 }
+function renderEndpoints(list){
+ if(!list)return;const body=$('deviceRows');body.replaceChildren();
+ $('devSub').textContent='Live latency probes · '+list.length+' endpoints';
+ list.forEach(e=>{const tr=document.createElement('tr');
+  const c1=document.createElement('td');const ic=document.createElement('span');ic.className='device-icon';ic.textContent='▣';const nm=document.createElement('b');nm.textContent=e.name;c1.append(ic,nm);
+  const c2=document.createElement('td');c2.textContent=e.host;
+  const c3=document.createElement('td');const st=document.createElement('span');st.className='status '+(e.online?'online':'offline');st.textContent=e.online?'● Online':'● Unreachable';c3.append(st);
+  const c4=document.createElement('td');c4.textContent=e.latency==null?'—':e.latency.toFixed(0)+' ms';
+  const c5=document.createElement('td');c5.textContent='Just now';
+  tr.append(c1,c2,c3,c4,c5);body.append(tr);});
+}
+const alerted={};
+function alertOnce(key,cond,title,detail){if(cond&&!alerted[key]){alerted[key]=true;addEvent(title,detail,true);}else if(!cond&&alerted[key]){alerted[key]=false;addEvent(title.replace(/^.*$/,'Recovered: '+key),'Metric back to normal.');}}
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
+const lvl=(p)=>p>90?'crit':p>75?'warn':'';
+const num=(v,dp=0,u='')=>v==null?'—':v.toFixed(dp)+u;
+function mkBar(cls,p){const b=el('div','bar '+cls);const i=el('i',lvl(p));i.style.width=Math.min(100,p||0)+'%';b.append(i);return b}
+function renderGpus(list){
+ const box=$('gpuList');box.replaceChildren();
+ if(!list||!list.length){$('gpuSub').textContent='No GPU telemetry available';box.append(el('div','empty-event','No GPU detected (or driver tools such as nvidia-smi are unavailable).'));return}
+ $('gpuSub').textContent=list.length+' GPU'+(list.length>1?'s':'')+' · live utilization';
+ list.forEach((g,i)=>{const c=el('div','gpu-card');
+  const t=el('div','hw-title');t.append(el('b',null,'GPU '+i+' · '+g.name),el('span',null,g.vendor));c.append(t);
+  const memTxt=g.mem_total_gb!=null?num(g.mem_used_gb,1)+' / '+g.mem_total_gb+' GB':'—';
+  c.append(el('div','hw-sub','Utilization '+(g.usage==null?'n/a':g.usage.toFixed(0)+'%')+' · VRAM '+memTxt));
+  c.append(mkBar('',g.usage));
+  if(g.mem_total_gb)c.append(mkBar('mem',100*g.mem_used_gb/g.mem_total_gb));
+  const m=el('div','gpu-metrics');
+  [['Usage',num(g.usage,0,'%')],['Temp',num(g.temp,0,'°C')],['Power',num(g.power,0,' W')],['Clock',num(g.clock,0,' MHz')]].forEach(([k,v])=>{const d=el('div',null,k);d.append(el('b',null,v));m.append(d)});
+  c.append(m);box.append(c)});
+}
+function renderVolumes(list,rd,wr){
+ $('ioRead').textContent=rd.toFixed(1);$('ioWrite').textContent=wr.toFixed(1);
+ const box=$('volList');box.replaceChildren();
+ $('volSub').textContent=list.length+' volume'+(list.length===1?'':'s')+' detected';
+ list.forEach(v=>{const c=el('div','vol-item');const t=el('div','hw-title');
+  t.append(el('b',null,v.mount+(v.model?' · '+v.model:'')),el('span',null,v.percent.toFixed(0)+'% used'));c.append(t);
+  c.append(el('div','hw-sub',[v.kind,v.fstype,v.used_gb+' / '+v.total_gb+' GB',v.free_gb+' GB free'].filter(Boolean).join(' · ')));
+  c.append(mkBar('disk',v.percent));box.append(c)});
+}
+function renderHardware(list){
+ const body=$('hwRows');body.replaceChildren();$('hwCount').textContent=list.length+' components';
+ list.forEach(x=>{const tr=el('tr');const a=el('td');a.append(el('span','type-tag',x.type));
+  const b=el('td');b.append(el('b',null,x.name));tr.append(a,b,el('td',null,x.detail||''));body.append(tr)});
+}
+
+let bdView='services', lastBd=null;
+const fmtBw=(m)=>m>=1?fmtRate(m)+' Mbps':(m*1000).toFixed(0)+' Kbps';
+function renderBreakdown(bd){
+ if(bd)lastBd=bd;else bd=lastBd;
+ const box=$('bdList');if(!box)return;box.replaceChildren();
+ if(!bd){box.append(el('div','empty-event','Waiting for traffic data…'));return}
+ if(!bd.available){$('bdSub').textContent='Capture unavailable';box.append(el('div','empty-event',bd.reason||'Packet capture is not running.'));return}
+ const rows=(bdView==='apps'?bd.apps:bd.services)||[];
+ $('bdSub').textContent='Top '+(bdView==='apps'?'applications':'services')+' by bandwidth · sorted high → low';
+ if(!rows.length){box.append(el('div','empty-event','No traffic observed yet.'));return}
+ const top=rows[0].avg||1;
+ rows.forEach((r,i)=>{
+  const row=el('div','bd-row');
+  row.append(el('span','bd-rank',String(i+1)),el('b','bd-name',r.name));
+  const track=el('div','bd-track');const fill=el('div','bd-fill');fill.style.width=Math.max(2,100*r.avg/top)+'%';
+  const rxw=r.rx+r.tx>0?100*r.rx/(r.rx+r.tx):50;
+  const a=el('i','bd-rx');a.style.width=rxw+'%';const b=el('i','bd-tx');b.style.width=(100-rxw)+'%';fill.append(a,b);track.append(fill);
+  row.append(track);
+  const v=el('span','bd-val',fmtBw(r.avg));v.append(el('small',null,' ↓'+fmtBw(r.rx)+' ↑'+fmtBw(r.tx)));
+  row.append(v,el('span','bd-share',r.share.toFixed(0)+'%'),el('span','bd-total',fmtMB(r.total_mb)));
+  box.append(row);
+ });
+}
+document.querySelectorAll('.bd-tab').forEach(t=>t.addEventListener('click',()=>{bdView=t.dataset.view;document.querySelectorAll('.bd-tab').forEach(x=>x.classList.toggle('active',x===t));renderBreakdown();}));
+function updateHealthNames(d){
+ const info=window.sysInfo||{},hw=window.hw||[];
+ $('cpuName').textContent=info.cpu||'Processor';
+ $('cpuDetail').textContent=[info.cores?info.cores+' threads':null,d.cpu_freq?(d.cpu_freq/1000).toFixed(2)+' GHz now':null].filter(Boolean).join(' · ')||'Processor utilization';
+ const mods=hw.filter(x=>x.type==='RAM');
+ $('memName').textContent=mods.length?mods.length+'× '+mods[0].name+(mods[0].detail?' ('+mods[0].detail+')':''):'System memory'+(info.ram_gb?' · '+info.ram_gb+' GB':'');
+ const sys=(d.volumes||[]).find(v=>v.mount==='/'||/^C/i.test(v.mount))||(d.volumes||[])[0];
+ $('diskName').textContent=sys?(sys.mount+(sys.model?' · '+sys.model:'')+(sys.kind?' ('+sys.kind+')':'')):'System drive';
+ const g=(d.gpus||[])[0],row=$('gpuRow');
+ if(!g){row.hidden=true;return}
+ row.hidden=false;$('gpuName').textContent=g.name;
+ const u=g.usage==null?0:g.usage;
+ $('gpuValue').textContent=g.usage==null?'n/a':u.toFixed(0)+'%';
+ $('gpuState').textContent=g.usage==null?'No usage data':u>85?'High utilization':u>50?'Moderate load':'Normal load';
+ $('gpuDetail').textContent=[g.mem_total_gb?'VRAM '+num(g.mem_used_gb,1)+' / '+g.mem_total_gb+' GB':null,g.temp!=null?g.temp.toFixed(0)+'°C':null].filter(Boolean).join(' · ')||'Graphics';
+ $('gpuBar').style.width=u+'%';setGauge('gpuGauge',u,colors.gpu);
+}
 function handleMetrics(d){
+ updateHealthNames(d);
+ renderGpus(d.gpus);renderVolumes(d.volumes||[],d.disk_read||0,d.disk_write||0);
+ alertOnce('cpu',d.cpu>90,'High CPU usage','CPU at '+d.cpu.toFixed(0)+'%');alertOnce('memory',d.memory>90,'High memory usage','Memory at '+d.memory.toFixed(0)+'%');alertOnce('network',!d.online,'Internet unreachable','All probes timed out');
  for(const key of ['rx','tx','cpu','memory']){history[key].push(d[key]);if(history[key].length>MAX)history[key].shift();}
- $('rxValue').textContent=d.rx.toFixed(1);$('txValue').textContent=d.tx.toFixed(1);
- $('latencyValue').textContent=d.latency.toFixed(0);$('lossValue').textContent=d.loss.toFixed(2);
- $('chartRx').innerHTML=d.rx.toFixed(1)+' <small>Mbps</small>';$('chartTx').innerHTML=d.tx.toFixed(1)+' <small>Mbps</small>';
- $('latencyBar').style.width=Math.min(100,d.latency/2)+'%';$('latencyStatus').textContent=d.latency<50?'Healthy':'Elevated';
+ $('rxValue').textContent=fmtRate(d.rx);$('txValue').textContent=fmtRate(d.tx);$('rxTotal').textContent='Total '+fmtMB(d.total_rx);$('txTotal').textContent='Total '+fmtMB(d.total_tx);
+ $('latencyValue').textContent=d.online?d.latency.toFixed(0):'—';$('lossValue').textContent=d.loss.toFixed(2);
+ $('chartRx').innerHTML=fmtRate(d.rx)+' <small>Mbps</small>';$('chartTx').innerHTML=fmtRate(d.tx)+' <small>Mbps</small>';
+ $('latencyBar').style.width=Math.min(100,d.latency/2)+'%';$('latencyStatus').textContent=!d.online?'Offline':d.latency<80?'Healthy':'Elevated';
  $('lossBar').style.width=Math.min(100,d.loss*40)+'%';$('lossStatus').textContent=d.loss===0?'No packet loss':d.loss<1?'Within threshold':'Packet loss detected';
  $('lossStatus').className='trend '+(d.loss<1?'good':'neutral');
  $('cpuValue').textContent=d.cpu.toFixed(0)+'%';$('memoryValue').textContent=d.memory.toFixed(0)+'%';
  $('cpuState').textContent=d.cpu>75?'High utilization':d.cpu>50?'Moderate load':'Normal load';
  $('memoryState').textContent=d.memory>80?'Memory pressure':d.memory>65?'Moderate usage':'Normal usage';
- $('cpuBar').style.width=d.cpu+'%';$('memoryBar').style.width=d.memory+'%';setGauge('cpuGauge',d.cpu,colors.cpu);setGauge('memoryGauge',d.memory,colors.memory);
- $('devLat1').textContent=Math.max(4,d.latency*.35).toFixed(0)+' ms';$('devLat2').textContent=d.latency.toFixed(0)+' ms';$('devLat3').textContent=(d.latency*1.4).toFixed(0)+' ms';
+ $('memDetail').textContent=d.memory_used_gb+' GB in use of '+(window.sysInfo?sysInfo.ram_gb+' GB':'RAM');$('diskValue').textContent=d.disk.toFixed(0)+'%';$('diskState').textContent=d.disk>90?'Almost full':d.disk>75?'Filling up':'Healthy';$('diskFree').textContent=d.disk_free_gb+' GB free';$('diskBar').style.width=d.disk+'%';setGauge('diskGauge',d.disk,colors.disk);$('cpuBar').style.width=d.cpu+'%';$('memoryBar').style.width=d.memory+'%';setGauge('cpuGauge',d.cpu,colors.cpu);setGauge('memoryGauge',d.memory,colors.memory);
+  renderEndpoints(d.endpoints);renderBreakdown(d.breakdown);
  drawLine('rxSpark',history.rx,colors.rx,true);drawLine('txSpark',history.tx,colors.tx,true);drawTraffic();
 }
 function connect(){
  const scheme=location.protocol==='https:'?'wss':'ws';socket=new WebSocket(`${scheme}://${location.host}/ws`);
  socket.addEventListener('open',()=>{setConnection(true,'WebSocket active');$('pauseBtn').disabled=false;addEvent('WebSocket connected','Persistent bidirectional channel established.');});
  socket.addEventListener('message',(event)=>{let d;try{d=JSON.parse(event.data)}catch{return}
+  if(d.type==='hello'){window.sysInfo=d.info;$('hostName').textContent=d.info.hostname;$('userTitle').textContent=d.info.os;$('sysInfo').textContent=d.info.hostname+' · '+d.info.os+' · '+d.info.cores+' logical cores · '+d.info.ram_gb+' GB RAM';$('verLabel').textContent='v'+d.version;}
+  if(d.type==='hardware'){window.hw=d.components;renderHardware(d.components);}
   if(d.type==='metrics'){handleMetrics(d);$('clock').textContent=d.time;}
   if(d.type==='status'){addEvent(d.message,'Server event received over WebSocket.',d.message.toLowerCase().includes('pause'));showToast(d.message);}
   if(d.type==='pong'){addEvent('WebSocket pong','Server replied at '+d.time);showToast('Pong received from server');}
@@ -70,6 +164,6 @@ function connect(){
 }
 $('pauseBtn').addEventListener('click',()=>{paused=!paused;$('pauseBtn').textContent=paused?'▶ Resume stream':'Ⅱ Pause stream';if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({action:'pause',value:paused}));});
 $('pingBtn').addEventListener('click',()=>{if(socket&&socket.readyState===WebSocket.OPEN){socket.send(JSON.stringify({action:'ping'}));showToast('Ping sent over WebSocket');}else showToast('WebSocket is not connected yet');});
-$('refreshBtn').addEventListener('click',()=>{showToast('Endpoint table refreshed');addEvent('Endpoint inventory refreshed','3 demo endpoints checked.');});
+$('refreshBtn').addEventListener('click',()=>{if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({action:'refresh'}));});
 window.addEventListener('resize',()=>{drawTraffic();drawLine('rxSpark',history.rx,colors.rx,true);drawLine('txSpark',history.tx,colors.tx,true)});
 setConnection(false,'Connecting…');connect();
