@@ -167,3 +167,35 @@ $('pingBtn').addEventListener('click',()=>{if(socket&&socket.readyState===WebSoc
 $('refreshBtn').addEventListener('click',()=>{if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({action:'refresh'}));});
 window.addEventListener('resize',()=>{drawTraffic();drawLine('rxSpark',history.rx,colors.rx,true);drawLine('txSpark',history.tx,colors.tx,true)});
 setConnection(false,'Connecting…');connect();
+
+
+// Chuyển giữa các trang trong sidebar. Bốn trang mới hiện đang để trống,
+// chưa gọi API hoặc xử lý dữ liệu riêng.
+const pageTitles = {
+  overview: 'Overview',
+  'traffic-analytics': 'Traffic analytics',
+  'hardware-page': 'Hardware',
+  'devices-page': 'Devices',
+  'event-log': 'Event log'
+};
+function showPage(page) {
+  const isOverview = page === 'overview';
+  document.querySelectorAll('.main > :not(.topbar):not(#blankPage)').forEach(section => {
+    section.hidden = !isOverview;
+  });
+  $('blankPage').hidden = isOverview;
+  $('currentPageName').textContent = pageTitles[page] || 'Overview';
+  document.querySelectorAll('.sidebar .nav[data-page]').forEach(link => {
+    const active = link.dataset.page === page;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+document.querySelectorAll('.sidebar .nav[data-page]').forEach(link => {
+  link.addEventListener('click', event => {
+    event.preventDefault();
+    showPage(link.dataset.page);
+    window.history.replaceState(null, '', link.getAttribute('href'));
+  });
+});

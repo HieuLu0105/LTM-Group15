@@ -10,15 +10,16 @@
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark">N</span><span>Net<span class="brand-light">Pulse</span><small>NETWORK MONITOR</small></span></div>
     <div class="side-label">WORKSPACE</div>
-    <a class="nav active" href="#" aria-current="page"><span>▦</span> Overview</a>
-    <a class="nav disabled" aria-disabled="true" tabindex="-1" title="Coming soon"><span>⌁</span> Traffic analytics</a>
-    <a class="nav disabled" aria-disabled="true" tabindex="-1" title="Coming soon"><span>▥</span> Hardware</a>
-    <a class="nav disabled" aria-disabled="true" tabindex="-1" title="Coming soon"><span>▣</span> Devices</a>
-    <a class="nav disabled" aria-disabled="true" tabindex="-1" title="Coming soon"><span>◷</span> Event log <i class="nav-dot"></i></a>
+    <a class="nav active" href="#overview" data-page="overview" aria-current="page"><span>▦</span> Overview</a>
+    <a class="nav" href="#traffic-analytics" data-page="traffic-analytics"><span>⌁</span> Traffic analytics</a>
+    <a class="nav" href="#hardware-page" data-page="hardware-page"><span>▥</span> Hardware</a>
+    <a class="nav" href="#devices-page" data-page="devices-page"><span>▣</span> Devices</a>
+    <a class="nav" href="#event-log" data-page="event-log"><span>◷</span> Event log <i class="nav-dot"></i></a>
     <div class="sidebar-bottom"><p class="side-credit">This is a project of group 15 for Network Developing class. Please leave a review at <a href="mailto:netpulsegroup15@gmail.com">netpulsegroup15@gmail.com</a></p><div class="connection-card"><span class="pulse-dot"></span><div><b>Live connection</b><small id="sideConnection">Connecting…</small></div></div><div class="user"><div class="avatar">N</div><div><b id="userTitle">Local agent</b><small id="hostName">This computer</small></div><span class="more">···</span></div></div>
   </aside>
   <main class="main">
-    <header class="topbar"><div class="crumb">Monitoring <span>/</span> <b>Overview</b></div><div class="top-actions"><span class="live-pill"><i></i><span id="liveText">CONNECTING</span></span><button id="pauseBtn" class="button secondary">Ⅱ Pause stream</button><div class="date-chip" id="clock">--:--:--</div></div></header>
+    <header class="topbar"><div class="crumb">Monitoring <span>/</span> <b id="currentPageName">Overview</b></div><div class="top-actions"><span class="live-pill"><i></i><span id="liveText">CONNECTING</span></span><button id="pauseBtn" class="button secondary">Ⅱ Pause stream</button><div class="date-chip" id="clock">--:--:--</div></div></header>
+    <div id="blankPage" class="blank-page" hidden></div>
     <section class="page-heading"><div><div class="eyebrow">NETWORK OPERATIONS CENTER</div><h1>Network overview <span class="spark">✦</span></h1><p><span id="sysInfo">Real-time metrics collected from this computer.</span></p></div><div class="heading-right"><span class="demo-tag" id="modeTag">● REAL DATA · LOCAL AGENT</span><button class="button primary" id="pingBtn">↗ Send WebSocket ping</button></div></section>
     <section class="stats-grid">
       <article class="stat-card"><div class="stat-top"><span>Inbound traffic</span><span class="stat-icon blue">↓</span></div><div class="stat-value"><span id="rxValue">—</span><small>Mbps</small></div><div class="stat-foot"><span class="trend up">↗ Live</span><span id="rxTotal">Incoming bandwidth</span></div><div class="mini-chart"><canvas id="rxSpark"></canvas></div></article>
