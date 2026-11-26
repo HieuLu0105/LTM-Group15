@@ -1,0 +1,1 @@
+"""NetPulse local alert subsystem."""

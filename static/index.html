@@ -19,7 +19,14 @@
   </aside>
   <main class="main">
     <header class="topbar"><div class="crumb">Monitoring <span>/</span> <b id="currentPageName">Overview</b></div><div class="top-actions"><span class="live-pill"><i></i><span id="liveText">CONNECTING</span></span><button id="pauseBtn" class="button secondary">Ⅱ Pause stream</button><div class="date-chip" id="clock">--:--:--</div></div></header>
-    <div id="blankPage" class="blank-page" hidden></div>
+    <section id="hardwarePage" class="hardware-page" hidden>
+      <div class="page-heading"><div><div class="eyebrow">SYSTEM TELEMETRY</div><h1>Hardware monitoring</h1><p>Detailed live hardware readings · unavailable sensors show N/A</p></div><button class="button secondary" id="hardwareRefresh">↻ Refresh hardware</button></div>
+      <div class="hw-summary" id="hardwareSummary"><div class="panel">Waiting for live metrics…</div></div>
+      <div class="panel hw-detail-panel"><div class="panel-head"><div><h2>Threshold alerts</h2><p>Instant or sustained alerts · Telegram private · cooldown · recovery</p></div><span id="telegramStatus">Checking Telegram…</span></div>
+      <div id="alertRules" class="alert-rules"></div><div class="alert-actions"><button class="button primary" id="saveAlertRules">Save thresholds</button><button class="button secondary" id="testTelegram">Send Telegram test</button><span id="alertFeedback" role="status"></span></div></div>
+    </section>
+    <section id="trafficPage" hidden><div class="page-heading"><div><h1>Traffic analytics</h1><p>Live network telemetry · measured on this computer</p></div></div><div id="trafficLive"></div><article class="panel obs-panel"><h2>Bandwidth · last 60 samples</h2><canvas id="obsChart" style="width:100%;height:160px"></canvas></article><div id="trafficDetails"></div><article class="panel obs-panel"><h2>Network diagnostics</h2><button class="button secondary" data-diag="ping">Ping</button> <button class="button secondary" data-diag="trace">Traceroute</button> <button class="button secondary" data-diag="dns">DNS lookup</button><pre id="diagOutput"></pre></article></section>
+<section id="eventPage" hidden><div class="page-heading"><div><h1>Event log</h1><p>Persistent local history</p></div></div><article class="panel obs-panel"><div class="obs-controls"><input id="eventSearch" placeholder="Search messages"><select id="eventLevel"><option value="">All levels</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>RECOVERY</option></select><select id="eventSource"><option value="">All sources</option><option>System</option><option>Network</option><option>Hardware</option><option>Telegram</option><option>Collector</option></select><select id="eventPeriod"><option value="">All time</option><option value="1">24 hours</option><option value="7">7 days</option><option value="30">30 days</option></select><button class="button secondary" id="exportCsv">CSV</button><button class="button secondary" id="exportJson">JSON</button></div><div id="persistentEvents"></div></article></section>    <div id="blankPage" class="blank-page" hidden></div>
     <section class="page-heading"><div><div class="eyebrow">NETWORK OPERATIONS CENTER</div><h1>Network overview <span class="spark">✦</span></h1><p><span id="sysInfo">Real-time metrics collected from this computer.</span></p></div><div class="heading-right"><span class="demo-tag" id="modeTag">● REAL DATA · LOCAL AGENT</span><button class="button primary" id="pingBtn">↗ Send WebSocket ping</button></div></section>
     <section class="stats-grid">
       <article class="stat-card"><div class="stat-top"><span>Inbound traffic</span><span class="stat-icon blue">↓</span></div><div class="stat-value"><span id="rxValue">—</span><small>Mbps</small></div><div class="stat-foot"><span class="trend up">↗ Live</span><span id="rxTotal">Incoming bandwidth</span></div><div class="mini-chart"><canvas id="rxSpark"></canvas></div></article>
@@ -54,4 +61,4 @@
 </div>
 <div class="toast" id="toast"></div>
 <script src="/static/app.js"></script>
-</body></html>
+<script src="/static/observability.js"></script></body></html>

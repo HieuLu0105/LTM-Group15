@@ -1,0 +1,8 @@
+{
+  "cpu": {"enabled": true, "threshold": 90, "duration": 10, "cooldown": 300, "mode": "sustained"},
+  "memory": {"enabled": true, "threshold": 90, "duration": 10, "cooldown": 300, "mode": "sustained"},
+  "disk": {"enabled": true, "threshold": 90, "duration": 0, "cooldown": 300, "mode": "instant"},
+  "cpu_temp": {"enabled": true, "threshold": 85, "duration": 10, "cooldown": 300, "mode": "sustained"},
+  "gpu_temp": {"enabled": true, "threshold": 85, "duration": 10, "cooldown": 300, "mode": "sustained"},
+  "gpu_usage": {"enabled": false, "threshold": 95, "duration": 30, "cooldown": 300, "mode": "sustained"}
+}

@@ -60,3 +60,25 @@
 .side-credit a{color:#86aaff;text-decoration:none;overflow-wrap:anywhere}
 .side-credit a:hover{text-decoration:underline}
 @media(max-width:700px){.side-credit{display:none}}
+
+/* Hardware page: isolated from Overview layout. */
+.hardware-page{display:flex;flex-direction:column;gap:18px}.hardware-page[hidden]{display:none!important}
+.hw-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.hw-detail-panel{padding:20px}.hw-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.hw-detail-tile{min-width:0;border:1px solid #29364c;border-radius:10px;padding:14px;background:#121c2d;display:flex;flex-direction:column;gap:8px;overflow-wrap:anywhere}
+.hw-tile-name{color:#9daec7;font-size:12px}.hw-detail-tile b{font-size:16px;color:#e6edff}.hw-detail-tile small{color:#8798b2;font-size:11px}
+.alert-rules{display:flex;flex-direction:column;gap:10px;margin-top:16px}.alert-rule{display:grid;grid-template-columns:minmax(130px,1.5fr) repeat(4,minmax(85px,1fr));align-items:end;gap:10px;border-bottom:1px solid #26344a;padding:12px 0}
+.alert-rule label{font-size:12px;color:#dbe6fb}.rule-field{display:flex;flex-direction:column;gap:5px}.alert-rule input[type=number],.alert-rule select{width:100%;min-width:0;padding:9px;border:1px solid #354560;border-radius:7px;background:#10192a;color:#e6edff}
+.alert-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}#alertFeedback{font-size:12px;color:#a8b9d0}
+@media(max-width:1000px){.hw-summary,.hw-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.alert-rule{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.hw-summary,.hw-detail-grid,.alert-rule{grid-template-columns:1fr}}
+/* Ensure HTML hidden attribute wins over layout display rules. */
+[hidden]{display:none!important}
+
+.sensor-group{grid-column:1/-1;min-width:0;margin-bottom:12px}.sensor-group summary{cursor:pointer;font-weight:600;padding:10px 0}.sensor-group .hw-detail-grid{margin-top:8px}
+/* Grouped hardware dashboard */
+#hardwareSummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.hw-unit{min-width:0;padding:18px;overflow:hidden}.hw-unit-head{border-bottom:1px solid #29364c;padding-bottom:12px}.hw-unit-head h2{font-size:17px;margin:0;color:#a9c8ff}.hw-unit-head p,.hw-unit-detail{font-size:12px;color:#91a3bd;margin:5px 0}.hw-unit-block{padding:14px 0;border-bottom:1px solid #29364c;overflow-wrap:anywhere}.hw-unit-block:last-child{border-bottom:0;padding-bottom:0}.hw-unit-block h3{font-size:14px;margin:0 0 5px;color:#e6edff}.hw-unit-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.hw-unit-metrics .hw-detail-tile{padding:10px;gap:5px}.hw-unit-metrics small:empty{display:none}.hw-unit-sensors{margin-top:12px}.hw-unit-sensors summary{cursor:pointer;font-size:12px;color:#a9c8ff;padding:6px 0}.hw-sensor-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-bottom:1px solid #29364c;font-size:12px}.hw-sensor-row small{grid-column:1/-1;color:#91a3bd}.hw-other{grid-column:1/-1}.hw-gpu .hw-unit-head h2{color:#c4b5fd}.hw-ram .hw-unit-head h2{color:#6ee7b7}.hw-disk .hw-unit-head h2{color:#fcd34d}@media(max-width:1050px){#hardwareSummary{grid-template-columns:1fr}}
+
+.hw-column{display:flex;flex-direction:column;gap:16px;min-width:0}.hw-source{grid-column:1/-1;margin:0;color:#91a3bd;font-size:12px}.hw-unit-metrics .hw-detail-tile{border:0;background:transparent;padding:8px 4px}.hw-unit-metrics .hw-detail-tile b{font-size:19px}.hw-unit{overflow:visible}.hw-unit-sensors{overflow-wrap:anywhere}
+.obs-panel{margin-bottom:12px;padding:16px;min-width:0}.obs-panel h2{margin:0 0 12px}.obs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.obs-grid h2{margin:8px 0 0}.obs-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.obs-controls input,.obs-controls select{background:#101827;color:#e2e8f0;border:1px solid #344155;border-radius:6px;padding:8px}.obs-panel pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto}.obs-panel .table-wrap{max-height:420px;overflow:auto}.obs-panel td{white-space:pre-wrap;overflow-wrap:anywhere} [hidden]{display:none!important}

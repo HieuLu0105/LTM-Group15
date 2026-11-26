@@ -1,0 +1,1 @@
+Copy LibreHardwareMonitorLib.dll and its companion DLLs from the .NET Framework-compatible official LibreHardwareMonitor release here. Keep license files and any required native dependencies. Do not copy the GUI executable. The default pythonnet runtime on Windows is .NET Framework; do not mix DLLs from different target frameworks.

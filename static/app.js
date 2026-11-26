@@ -183,7 +183,11 @@ function showPage(page) {
   document.querySelectorAll('.main > :not(.topbar):not(#blankPage)').forEach(section => {
     section.hidden = !isOverview;
   });
-  $('blankPage').hidden = isOverview;
+  $('blankPage').hidden = page !== 'devices-page';
+  $('trafficPage').hidden = page !== 'traffic-analytics';
+  $('eventPage').hidden = page !== 'event-log';
+  $('hardwarePage').hidden = page !== 'hardware-page';
+  if(page === 'hardware-page') refreshHardware();
   $('currentPageName').textContent = pageTitles[page] || 'Overview';
   document.querySelectorAll('.sidebar .nav[data-page]').forEach(link => {
     const active = link.dataset.page === page;
@@ -199,3 +203,82 @@ document.querySelectorAll('.sidebar .nav[data-page]').forEach(link => {
     window.history.replaceState(null, '', link.getAttribute('href'));
   });
 });
+
+
+// Hardware details + persisted alert rules; separate from legacy Overview rendering.
+let hardwarePoll = null, rulesLoaded = false;
+const hwLabels = {cpu:'CPU usage',memory:'RAM usage',disk:'Disk usage',cpu_temp:'CPU temperature',gpu_temp:'GPU temperature',gpu_usage:'GPU usage'};
+function hwTile(name, value, detail='') {
+  const tile=el('div','hw-detail-tile');tile.append(el('span','hw-tile-name',name),el('b',null,value==null?'N/A':String(value)),el('small',null,detail));return tile;
+}
+function renderHardwareDetail(d) {
+  const m=d.metrics||{}, live=d.live||{}, info=d.info||{}, components=d.components||[];
+  const root=$('hardwareSummary');
+  const opened=new Set([...root.querySelectorAll('details[open]')].map(x=>x.dataset.key));
+  root.replaceChildren();
+  const left=el("div","hw-column"), right=el("div","hw-column");root.append(left,right);
+  const groups=new Map();
+  for(const s of d.sensors||[]){const key=s.hardware_id||String(s.id||'').split('/').slice(0,-2).join('/')||s.hardware||'Other';if(!groups.has(key))groups.set(key,{key,name:s.hardware||key,items:[]});groups.get(key).items.push(s);}
+  const remaining=new Set(groups.values());
+  const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const byType=t=>components.filter(c=>c.type===t);
+  const match=(name,pattern)=>[...remaining].filter(g=>pattern.test(g.key)&&norm(g.name)===norm(name));
+  const valid=v=>typeof v==='number'&&Number.isFinite(v);
+  const fmt=(v,u='')=>valid(v)?Number(v.toFixed(2))+(u?' '+u:''):'N/A';
+  const temp=v=>valid(v)&&v>0?v:null;
+  const positive=v=>valid(v)&&v>0?v:null;
+  const read=(gs,type,re)=>gs.flatMap(g=>g.items).find(s=>String(s.type).toLowerCase()===type.toLowerCase()&&re.test(s.name)&&valid(s.value))?.value;
+  const section=(title,subtitle,kind)=>{const p=el('article','panel hw-unit hw-'+kind);const h=el('div','hw-unit-head');h.append(el('h2',null,title),el('p',null,subtitle));p.append(h);(["cpu","ram","other"].includes(kind)?left:right).append(p);return p;};
+  const block=(p,name,detail,metrics,gs=[])=>{const b=el('div','hw-unit-block');b.append(el('h3',null,name));if(detail)b.append(el('p','hw-unit-detail',detail));if(metrics.length){const grid=el('div','hw-unit-metrics');for(const [label,value] of metrics)grid.append(hwTile(label,value));b.append(grid);}for(const g of gs){remaining.delete(g);const det=el('details','hw-unit-sensors');det.dataset.key=g.key;det.open=opened.has(g.key);det.append(el('summary',null,'Detailed sensors · '+g.items.length));const table=el('div','hw-sensor-table');for(const s of g.items){const row=el('div','hw-sensor-row');row.append(el('span',null,s.name+' · '+s.type),el('b',null,valid(s.value)?(s.display||fmt(s.value,s.unit)):'N/A'),el('small',null,'Min '+(s.min||'N/A')+' / Max '+(s.max||'N/A')));table.append(row);}det.append(table);b.append(det);}p.append(b);};
+  const cpu=section('CPU','Processor telemetry','cpu');const cg=[...remaining].filter(g=>/cpu|k10temp|coretemp/i.test(g.key));
+  block(cpu,byType('CPU')[0]?.name||info.cpu||'Processor',byType('CPU')[0]?.detail||'', [['Usage',fmt(m.cpu,'%')],['Temperature',fmt(temp(temp(read(cg,'Temperature',/tctl|package/i))??temp(m.cpu_temp)),'°C')],['Clock',fmt(positive(read(cg,'Clock',/^cores \(average\)$/i))??positive(live.cpu_freq),'MHz')],['Package power',fmt(positive(read(cg,'Power',/^package$/i)),'W')]],cg);
+  const gpu=section('GPU','Graphics adapters','gpu');const names=[...new Set([...byType('GPU').map(c=>c.name),...(live.gpus||[]).map(g=>g.name)])];
+  const virtual=names.filter(n=>/virtual|remote display|indirect display/i.test(n));
+  for(const name of names.filter(n=>!virtual.includes(n))){const g=(live.gpus||[]).find(x=>x.name===name)||{};const gs=match(name,/gpu/i);const c=byType('GPU').find(x=>x.name===name);block(gpu,name,c?.detail||'', [['Usage',fmt(read(gs,'Load',/^gpu core$/i)??g.usage,'%')],['Temperature',fmt(temp(read(gs,'Temperature',/^gpu core$/i)??g.temp),'°C')],['Hotspot',fmt(temp(read(gs,'Temperature',/hot.?spot/i)),'°C')],['Clock',fmt(read(gs,'Clock',/^gpu core$/i)??g.clock,'MHz')],['Power',fmt(read(gs,'Power',/total|board|package/i)??g.power,'W')],['VRAM used',valid(g.mem_used_gb)?fmt(g.mem_used_gb,'GB'):fmt(read(gs,'SmallData',/memory used/i),'MB')]],gs);}
+  if(virtual.length){const det=el('details','hw-unit-sensors');det.dataset.key='virtual-gpus';det.open=opened.has(det.dataset.key);det.append(el('summary',null,'Virtual display adapters · '+virtual.length));for(const name of virtual)det.append(el('p','hw-unit-detail',name));gpu.append(det);}
+  for(const g of [...remaining].filter(g=>/gpu/i.test(g.key)))block(gpu,g.name,'Sensor provider',[],[g]);
+  const ram=section('RAM','System memory','ram');const rg=[...remaining].filter(g=>/ram|memory|dimm/i.test(g.key)&&!/gpu/i.test(g.key));block(ram,'Memory utilization','',[['Usage',fmt(m.memory,'%')],['Usable capacity',fmt(info.ram_gb,'GB')]],rg);for(const c of byType('RAM'))block(ram,c.name.replace(/^Unknown\s+(?=CT\d)/i,'Crucial ').replace(/^Unknown\s+(?=F[345]-)/i,'G.Skill '),c.detail,[]);
+  const disk=section('Storage','Physical drives and volumes','disk');for(const c of byType('Disk')){const gs=match(c.name,/storage|hdd|ssd|nvme/i);const vs=(live.volumes||[]).filter(v=>norm(v.model)===norm(c.name));block(disk,c.name,c.detail,[['Temperature',fmt(temp(read(gs,'Temperature',/^(composite temperature|temperature|drive temperature)$/i)),'°C')],...vs.map(v=>[v.mount,fmt(v.percent,'%')+' · '+v.used_gb+'/'+v.total_gb+' GB'])],gs);}for(const v of live.volumes||[])if(!byType('Disk').some(c=>norm(c.name)===norm(v.model)))block(disk,v.mount,v.model||'', [['Used',fmt(v.percent,'%')],['Capacity',v.used_gb+'/'+v.total_gb+' GB']]);
+  const other=section('System & peripherals','Motherboard, network, battery and other sensors','other');for(const c of components.filter(c=>!['CPU','GPU','RAM','Disk'].includes(c.type)))block(other,c.name,c.type+' · '+(c.detail||''),[]);for(const g of remaining)block(other,g.name,'Sensor provider',[],[g]);
+  const source=[...new Set((d.sensors||[]).map(s=>s.source).filter(Boolean))];root.prepend(el('p','hw-source','Sensor source: '+(source.join(' / ')||'Unavailable')+' · Basic metrics: system APIs'));
+  if(!(d.sensors||[]).length)root.append(el('p','empty-event','No additional sensors available. Check embedded sensor permissions and dependencies.'));
+}
+async function refreshHardware(){
+  if($('hardwarePage').hidden)return;
+  try {const r=await fetch('/api/hardware');if(!r.ok)throw Error('HTTP '+r.status);renderHardwareDetail(await r.json());}
+  catch(e){$('alertFeedback').textContent='Hardware fetch failed: '+e.message;}
+}
+function renderAlertRules(rules){
+ const box=$('alertRules');box.replaceChildren();
+ Object.entries(rules).forEach(([key,r])=>{
+  const line=el('div','alert-rule');line.dataset.key=key;
+  const title=el('label');const check=document.createElement('input');check.type='checkbox';check.className='rule-enabled';check.checked=r.enabled;title.append(check,document.createTextNode(' '+hwLabels[key]));line.append(title);
+  const threshold=document.createElement('input');threshold.type='number';threshold.className='rule-threshold';threshold.min='0';threshold.max=key.includes('temp')?'150':'100';threshold.step='0.5';threshold.value=r.threshold;
+  const mode=document.createElement('select');mode.className='rule-mode';[['instant','Instant'],['sustained','Sustained']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;mode.append(o)});mode.value=r.mode;
+  const duration=document.createElement('input');duration.type='number';duration.className='rule-duration';duration.min='0';duration.max='3600';duration.value=r.duration;
+  const cooldown=document.createElement('input');cooldown.type='number';cooldown.className='rule-cooldown';cooldown.min='0';cooldown.max='86400';cooldown.value=r.cooldown;
+  const wrap=(name,control)=>{const label=el('label','rule-field',name);label.append(control);return label;};
+  line.append(wrap('Threshold '+(key.includes('temp')?'°C':'%'),threshold),wrap('Mode',mode),wrap('Duration (s)',duration),wrap('Cooldown (s)',cooldown));box.append(line);
+ });
+}
+async function loadAlertRules(){
+ try {const res=await fetch('/api/alerts');const d=await res.json();renderAlertRules(d.rules);
+ $('telegramStatus').textContent=d.telegram_configured?'● Telegram configured':'○ Telegram not configured';rulesLoaded=true;}
+ catch(e){$('alertFeedback').textContent='Cannot load rules: '+e.message;}
+}
+$('saveAlertRules').addEventListener('click',async()=>{
+ const rules={};for(const row of document.querySelectorAll('.alert-rule')){
+ const val=(cls)=>Number(row.querySelector('.'+cls).value);
+ rules[row.dataset.key]={enabled:row.querySelector('.rule-enabled').checked,threshold:val('rule-threshold'),mode:row.querySelector('.rule-mode').value,duration:val('rule-duration'),cooldown:val('rule-cooldown')};}
+ try{const r=await fetch('/api/alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rules)});
+ if(!r.ok)throw Error(await r.text());$('alertFeedback').textContent='Saved successfully';showToast('Alert rules saved');}
+ catch(e){$('alertFeedback').textContent='Save failed: '+e.message;}
+});
+$('testTelegram').addEventListener('click',async()=>{
+ $('alertFeedback').textContent='Sending test…';try{const r=await fetch('/api/telegram/test',{method:'POST'});const d=await r.json();$('alertFeedback').textContent=d.message;}
+ catch(e){$('alertFeedback').textContent='Telegram error: '+e.message;}
+});
+$('hardwareRefresh').addEventListener('click',refreshHardware);
+loadAlertRules();
+setInterval(refreshHardware,3000);
+if(location.hash==='#hardware-page')showPage('hardware-page');
